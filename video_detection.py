@@ -4,7 +4,7 @@ import cv2
 import tempfile
 
 def text_detection(inputfile,outputfile):
-    model = YOLO("C:/Users/Hari Haran/OneDrive/Desktop/Guvi_final_project/runs/detect/train2/weights/best.pt")
+    model = YOLO("best.pt")
 
     cap = cv2.VideoCapture(inputfile)
 
