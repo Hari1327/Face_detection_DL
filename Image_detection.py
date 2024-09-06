@@ -1,26 +1,48 @@
 import streamlit as st
 from ultralytics import YOLO
 import PIL
-
+import numpy as np
 import os
 
-os.environ['KMP_DUPLICATE_LIB_OK']='TRUE'
-def text_detection(file):
-    model = YOLO("best.pt")
-    uploaded_image = PIL.Image.open(file)
-    res = model.predict(uploaded_image,conf=0.5,save=True)
-    box = res[0].boxes.xyxy.tolist()
-    res_plotted = res[0].plot()[:, :, ::-1]
-    st.image(res_plotted, caption='Text Detections',use_column_width=True)
-    st.write("Number of the Detections : "+str(len(box)))
-    return uploaded_image
+# Fix for duplicate library errors
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
+def text_detection(file):
+    # Load your YOLOv8 model
+    model = YOLO("best.pt")
+    
+    # Load the uploaded image
+    uploaded_image = PIL.Image.open(file)
+    
+    # Perform inference
+    res = model.predict(uploaded_image, conf=0.5)
+    
+    # Extract bounding boxes
+    box = res[0].boxes.xyxy.tolist()
+    
+    # Plot the results
+    res_plotted = res[0].plot()[:, :, ::-1]  # Convert BGR to RGB for Streamlit display
+    
+    # Display the result in Streamlit
+    st.image(res_plotted, caption='Detected Image', use_column_width=True)
+    
+    # Display the number of detections
+    st.write(f"Number of detections: {len(box)}")
 
 def app():
-    st.title("Upload the image and Click on the Detect Button")
-    file = st.file_uploader("Upload PDF file",type=("jpg", "jpeg", "png"))
+    st.title("Upload an Image and Detect Faces")
+    
+    # Upload image file
+    file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
+    
     if file is not None:
-        st.image(image=file,caption='Selected Plan',use_column_width=True)
-    button= st.sidebar.button("Detect")
-    if button:
-        text_detection(file)
+        # Display the uploaded image before detection
+        st.image(file, caption='Uploaded Image', use_column_width=True)
+    
+        # Add a detect button to trigger the face detection
+        if st.button("Detect"):
+            # Call the face detection function and display the results
+            text_detection(file)
+
+if __name__ == "__main__":
+    app()
