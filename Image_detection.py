@@ -7,7 +7,7 @@ import os
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
 def text_detection(file):
-    model = YOLO("yolov8n.pt")
+    model = YOLO("best.pt")
     
     # Open and resize the image to 640x640
     uploaded_image = PIL.Image.open(file)
