@@ -1,48 +1,46 @@
 import streamlit as st
 from ultralytics import YOLO
 import PIL
-import numpy as np
 import os
 
-# Fix for duplicate library errors
+# Set this to avoid any library conflicts
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
 def text_detection(file):
-    # Load your YOLOv8 model
-    model = YOLO("best.pt")
+    model = YOLO("yolov8n.pt")
     
-    # Load the uploaded image
+    # Open and resize the image to 640x640
     uploaded_image = PIL.Image.open(file)
+    resized_image = uploaded_image.resize((640, 640))  # Resize the image
+
+    # Run the detection on the resized image
+    res = model.predict(resized_image, conf=0.5, save=True)
     
-    # Perform inference
-    res = model.predict(uploaded_image, conf=0.5)
+    # Extract bounding boxes and plot the results
+    box = res[0].boxes.xyxy.tolist()  # List of bounding boxes
+    res_plotted = res[0].plot()[:, :, ::-1]  # Convert to RGB
+
+    # Display the detection result and number of detections
+    st.image(res_plotted, caption='Detections', use_column_width=True)
+    st.write(f"Number of Detections: {len(box)}")
     
-    # Extract bounding boxes
-    box = res[0].boxes.xyxy.tolist()
-    
-    # Plot the results
-    res_plotted = res[0].plot()[:, :, ::-1]  # Convert BGR to RGB for Streamlit display
-    
-    # Display the result in Streamlit
-    st.image(res_plotted, caption='Detected Image', use_column_width=True)
-    
-    # Display the number of detections
-    st.write(f"Number of detections: {len(box)}")
+    return resized_image
 
 def app():
-    st.title("Upload an Image and Detect Faces")
+    st.title("Upload the Image and Click on Detect Button")
     
-    # Upload image file
-    file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
-    
+    # File uploader
+    file = st.file_uploader("Upload an Image", type=("jpg", "jpeg", "png"))
     if file is not None:
-        # Display the uploaded image before detection
-        st.image(file, caption='Uploaded Image', use_column_width=True)
+        st.image(image=file, caption='Uploaded Image', use_column_width=True)
     
-        # Add a detect button to trigger the face detection
-        if st.button("Detect"):
-            # Call the face detection function and display the results
+    # Detect button
+    if st.button("Detect"):
+        if file is not None:
             text_detection(file)
+        else:
+            st.write("Please upload an image file.")
 
-if __name__ == "__main__":
+# Run the app
+if __name__ == '__main__':
     app()
