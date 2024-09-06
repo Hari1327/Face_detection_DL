@@ -6,7 +6,7 @@ import os
 
 os.environ['KMP_DUPLICATE_LIB_OK']='TRUE'
 def text_detection(file):
-    model = YOLO("best(1).pt")
+    model = YOLO("best.pt")
     uploaded_image = PIL.Image.open(file)
     res = model.predict(uploaded_image,conf=0.5,save=True)
     box = res[0].boxes.xyxy.tolist()
