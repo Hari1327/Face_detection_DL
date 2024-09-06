@@ -48,6 +48,5 @@ class MultiApp:
 
 app = MultiApp()
 app.add_app("IMAGE",  Image_detection.app())
-app.add_app("VIDEO", video_detection.app)
-app.add_app("URL LINKS", URL_links.app)
+app.add_app("VIDEO", video_detection.app())
 app.run()
