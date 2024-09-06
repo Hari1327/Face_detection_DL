@@ -1,46 +1,58 @@
 import streamlit as st
 from ultralytics import YOLO
-import PIL
-import os
+import cv2
+import numpy as np
+from PIL import Image
 
-# Set this to avoid any library conflicts
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
+# Load the YOLO model
+model = YOLO("best.pt")  # Make sure the path is correct to your model
 
-def text_detection(file):
-    model = YOLO("best.pt")
+# Function to perform face detection
+def face_detection(uploaded_image):
+    # Convert the uploaded file to an OpenCV image
+    img_array = np.array(uploaded_image)
+    img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
     
-    # Open and resize the image to 640x640
-    uploaded_image = PIL.Image.open(file)
-    resized_image = uploaded_image.resize((640, 640))  # Resize the image
+    # Resize the image to 640x640 for YOLO input
+    img_resized = cv2.resize(img_bgr, (640, 640))
 
-    # Run the detection on the resized image
-    res = model.predict(resized_image, conf=0.5, save=True)
-    
-    # Extract bounding boxes and plot the results
-    box = res[0].boxes.xyxy.tolist()  # List of bounding boxes
-    res_plotted = res[0].plot()[:, :, ::-1]  # Convert to RGB
+    # Perform face detection
+    results = model(img_resized, imgsz=640)
 
-    # Display the detection result and number of detections
-    st.image(res_plotted, caption='Detections', use_column_width=True)
-    st.write(f"Number of Detections: {len(box)}")
-    
-    return resized_image
+    # Loop through results and draw bounding boxes and confidence scores
+    for result in results:
+        for box in result.boxes:
+            # Get bounding box coordinates and confidence score
+            x_min, y_min, x_max, y_max = box.xyxy[0].int().tolist()
+            confidence = box.conf[0].item()
 
-def app():
-    st.title("Upload the Image and Click on Detect Button")
-    
-    # File uploader
-    file = st.file_uploader("Upload an Image", type=("jpg", "jpeg", "png"))
-    if file is not None:
-        st.image(image=file, caption='Uploaded Image', use_column_width=True)
-    
-    # Detect button
-    if st.button("Detect"):
-        if file is not None:
-            text_detection(file)
-        else:
-            st.write("Please upload an image file.")
+            # Draw a rectangle for the bounding box
+            cv2.rectangle(img_resized, (x_min, y_min), (x_max, y_max), (255, 0, 0), 3)
 
-# Run the app
-if __name__ == '__main__':
-    app()
+            # Add confidence label
+            label = f'Confidence: {confidence:.2f}'
+            cv2.putText(img_resized, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+    return img_resized
+
+# Streamlit app layout
+st.title("Face Detection with YOLOv8")
+file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
+
+if file:
+    # Display uploaded image
+    st.image(file, caption='Uploaded Image', use_column_width=True)
+    
+    # Convert uploaded file to PIL Image
+    image = Image.open(file)
+    
+    # Button to trigger detection
+    if st.button("Detect Faces"):
+        # Perform face detection
+        detected_image = face_detection(image)
+        
+        # Convert OpenCV BGR image back to RGB for displaying in Streamlit
+        detected_image_rgb = cv2.cvtColor(detected_image, cv2.COLOR_BGR2RGB)
+        
+        # Display detected image with bounding boxes and confidence scores
+        st.image(detected_image_rgb, caption='Detected Faces', use_column_width=True)
