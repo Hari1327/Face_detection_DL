@@ -73,9 +73,17 @@ def app():
         st.write("Processing video...")
         processed_video_path = process_video(uploaded_video_path)
 
-        # Display the processed video
-        st.write("Processed Video:")
-        st.video(processed_video_path, format='video/mp4')
+        # Read the processed video for download
+        with open(processed_video_path, "rb") as file:
+            video_bytes = file.read()
+
+        # Create a download button for the processed video
+        st.download_button(
+            label="Download Processed Video",
+            data=video_bytes,
+            file_name="processed_video.mp4",
+            mime="video/mp4"
+        )
 
 if __name__ == "__main__":
     app()
