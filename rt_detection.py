@@ -5,7 +5,7 @@ from ultralytics import YOLO
 from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
 
 # Load YOLO model
-model = YOLO("path/to/your/yolov8n.pt")  # Replace with your model path
+model = YOLO("best.pt")  # Replace with your model path
 
 class VideoProcessor(VideoProcessorBase):
     def __init__(self):
@@ -33,8 +33,11 @@ class VideoProcessor(VideoProcessorBase):
 def app():
     st.title("Real-Time Face Detection with YOLO")
 
+    # URL to the webcam streaming API
+    webcam_url = "http://localhost:5000/video_feed"  # Replace with your webcam API URL
+
     # Create a Streamlit WebRTC video streamer
-    webrtc_streamer(key="video", video_processor_factory=VideoProcessor)
+    webrtc_streamer(key="video", video_processor_factory=VideoProcessor, video_source=webcam_url)
 
 if __name__ == "__main__":
     app()
