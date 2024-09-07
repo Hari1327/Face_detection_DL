@@ -6,3 +6,4 @@ streamlit_option_menu==0.3.13
 torch==2.3.1
 numpy==1.26.4
 streamlit-webrtc==0.47.7
+bytesioex==0.1.2
