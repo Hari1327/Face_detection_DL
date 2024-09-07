@@ -3,7 +3,6 @@ import streamlit.components.v1 as components
 
 st.title("Real-Time Webcam Stream")
 
-# HTML + JavaScript to access the webcam
 html_string = """
 <!DOCTYPE html>
 <html>
@@ -35,5 +34,4 @@ html_string = """
 </html>
 """
 
-# Embed the HTML + JavaScript into the Streamlit app
 components.html(html_string, height=500)
