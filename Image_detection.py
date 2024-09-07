@@ -57,4 +57,4 @@ def app():
 
 # Run the image detection app
 if __name__ == "__main__":
-    app_image()
+    app()
