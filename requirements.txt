@@ -1,4 +1,4 @@
-ultralytics==8.2.87
+ultralytics==8.2.60
 streamlit==1.38.0
 pillow==10.4.0
 streamlit_option_menu==0.3.13
@@ -6,4 +6,3 @@ torch==2.3.1
 numpy==1.26.4
 streamlit-webrtc==0.47.7
 opencv-python-headless==4.10.0.84
-libgl1-mesa-glx
