@@ -27,7 +27,7 @@ def app():
     st.title("Real-Time Face Detection App")
 
     # Load YOLO model
-    model = YOLO('yolov8n.pt')  # Path to your YOLO model
+    model = YOLO('best.pt')  # Path to your YOLO model
 
     # Start the webcam
     st.write("Starting webcam...")
