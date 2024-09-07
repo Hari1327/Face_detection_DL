@@ -47,5 +47,5 @@ class MultiApp:
                 break
 
 app = MultiApp()
-app.add_app("IMAGE",  Image_detection.app())
+app.add_app("IMAGE", Image_detection.app())
 app.add_app("VIDEO", video_detection.app())
