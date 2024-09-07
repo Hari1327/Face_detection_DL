@@ -4,35 +4,39 @@ import streamlit as st
 from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
 from ultralytics import YOLO
 
-# Load YOLO model
-model = YOLO("best.pt")  # Adjust the path to your model if necessary
+# Load YOLOv8 model for face detection
+model = YOLO("yolov8n.pt")
 
-class FaceDetectionTransformer(VideoTransformerBase):
+class VideoProcessor(VideoTransformerBase):
     def transform(self, frame):
-        # Convert frame to numpy array
+        # Convert frame to numpy array (OpenCV format)
         img = frame.to_ndarray(format="bgr24")
-        
-        # Perform face detection using YOLO
+
+        # Perform face detection with YOLO
         results = model(img, imgsz=640)
-        
+
         # Loop through detections and draw bounding boxes
         for result in results:
             for box in result.boxes:
-                x_min, y_min, x_max, y_max = box.xyxy[0].int().tolist()
+                x_min, y_min, x_max, y_max = map(int, box.xyxy[0])
                 confidence = box.conf[0].item()
 
-                # Draw rectangle around face
-                cv2.rectangle(img, (x_min, y_min), (x_max, y_max), (255, 0, 0), 2)
+                # Draw rectangle around detected face
+                cv2.rectangle(img, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
+
+                # Add confidence label
                 label = f"Confidence: {confidence:.2f}"
-                cv2.putText(img, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-        
+                cv2.putText(img, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+
+        # Return processed frame
         return img
 
+# Streamlit App
 def app():
-    st.title("Webcam Real-Time Face Detection")
-
-    # Start webrtc streamer
-    webrtc_streamer(key="face-detection", video_transformer_factory=FaceDetectionTransformer)
+    st.title("Real-Time Face Detection using YOLOv8")
+    
+    # Create a real-time webcam feed with YOLO face detection
+    webrtc_streamer(key="face-detection", video_transformer_factory=VideoProcessor, media_stream_constraints={"video": True, "audio": False})
 
 if __name__ == "__main__":
     app()
