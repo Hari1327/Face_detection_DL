@@ -31,14 +31,19 @@ def face_detection(uploaded_image):
 
 # The app function to be called in main.py
 def app():
-    st.title("Upload the image and Detect Faces")
+    st.title("Upload the Image and Detect Faces")
     file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
 
     if file:
         image = Image.open(file)
-        st.image(image, caption='Uploaded Image', use_column_width=True)
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.image(image, caption='Uploaded Image', use_column_width=True)
 
         if st.button("Detect Faces"):
             detected_image = face_detection(image)
             detected_image_rgb = cv2.cvtColor(detected_image, cv2.COLOR_BGR2RGB)
-            st.image(detected_image_rgb, caption='Detected Faces', use_column_width=True)
+            
+            with col2:
+                st.image(detected_image_rgb, caption='Detected Faces', use_column_width=True)
