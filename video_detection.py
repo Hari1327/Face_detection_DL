@@ -4,7 +4,7 @@ import cv2
 import tempfile
 import os
 
-def process_video(video_path, model_path='yolov8n.pt'):
+def process_video(video_path, model_path='best.pt'):
     # Load the YOLO model
     model = YOLO(model_path)
 
