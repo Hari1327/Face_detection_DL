@@ -2,7 +2,7 @@ import os
 import sys
 import streamlit as st
 from pathlib import Path
-import Image_detection,video_detection
+import Image_detection,video_detection, rt_detection
 from streamlit_option_menu import option_menu
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='TRUE'
@@ -49,3 +49,4 @@ class MultiApp:
 app = MultiApp()
 app.add_app("IMAGE", Image_detection.app())
 app.add_app("VIDEO", video_detection.app())
+app.add_app("Real Time Detection", rt_detection.app())
