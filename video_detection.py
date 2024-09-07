@@ -2,39 +2,36 @@ import streamlit as st
 from ultralytics import YOLO
 import cv2
 import tempfile
-import numpy as np
+import os
 
-# Load the YOLO model
-model = YOLO("best.pt")  # Make sure the path to your model is correct
+def process_video(video_path, model_path='yolov8n.pt'):
+    # Load the YOLO model
+    model = YOLO(model_path)
 
-# Function to perform face detection on video frames
-def face_detection_video(video_file):
-    # Create a VideoCapture object to read from the video file
-    cap = cv2.VideoCapture(video_file)
+    # Capture the uploaded video
+    video_capture = cv2.VideoCapture(video_path)
+    
+    # Get video properties
+    fps = video_capture.get(cv2.CAP_PROP_FPS)
+    width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     # Create a temporary file to save the output video
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
+    temp_video = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
+    output_path = temp_video.name
 
-    # Get video properties
-    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
-
-    # Define the codec and create a VideoWriter object to save the video with detections
+    # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(temp_file.name, fourcc, fps, (frame_width, frame_height))
+    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
-    while True:
-        ret, frame = cap.read()
-
+    # Process each frame in the video
+    while video_capture.isOpened():
+        ret, frame = video_capture.read()
         if not ret:
             break
-
-        # Resize the frame for YOLO input
-        frame_resized = cv2.resize(frame, (640, 640))
-
-        # Perform face detection
-        results = model(frame_resized, imgsz=640)
+        
+        # Perform face detection using the YOLO model
+        results = model(frame, imgsz=640)
 
         # Draw bounding boxes and confidence scores
         for result in results:
@@ -44,42 +41,41 @@ def face_detection_video(video_file):
 
                 # Draw a rectangle around the face
                 cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (255, 0, 0), 3)
-
-                # Prepare the text to display
+                
+                # Label with confidence score
                 label = f'Confidence: {confidence:.2f}'
                 cv2.putText(frame, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        # Write the frame with detections to the output video
+        # Write the processed frame to the output video
         out.write(frame)
-
-    # Release everything when done
-    cap.release()
+    
+    # Release everything if job is finished
+    video_capture.release()
     out.release()
 
-    return temp_file.name
+    return output_path
 
-# Streamlit app to upload and detect faces in video
 def app():
-    st.title("Upload a video and Detect Faces")
+    st.title("Video Face Detection App")
 
-    # Video uploader
-    video_file = st.file_uploader("Upload a Video", type=["mp4", "avi", "mov"])
+    # Video upload
+    uploaded_video = st.file_uploader("Upload a Video", type=["mp4", "mov", "avi"])
+    if uploaded_video is not None:
+        # Save the uploaded video to a temporary file
+        temp_video = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
+        temp_video.write(uploaded_video.read())
+        uploaded_video_path = temp_video.name
 
-    if video_file:
-        # Display the uploaded video
-        st.video(video_file)
+        # Display the original uploaded video
+        st.video(uploaded_video_path, format='video/mp4')
 
-        if st.button("Detect Faces"):
-            # Save the uploaded video to a temporary location
-            temp_video = tempfile.NamedTemporaryFile(delete=False)
-            temp_video.write(video_file.read())
+        # Detect faces and save the processed video
+        st.write("Processing video...")
+        processed_video_path = process_video(uploaded_video_path)
 
-            # Perform face detection
-            output_video_path = face_detection_video(temp_video.name)
+        # Display the processed video
+        st.write("Processed Video:")
+        st.video(processed_video_path, format='video/mp4')
 
-            # Display the output video with detections
-            st.video(output_video_path)
-
-# Run the app
 if __name__ == "__main__":
     app()
