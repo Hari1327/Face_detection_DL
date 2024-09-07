@@ -3,6 +3,9 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
+import requests
+from io import BytesIO
+from PIL import Image
 
 # Load YOLO model
 model = YOLO("best.pt")  # Replace with your model path
@@ -10,10 +13,16 @@ model = YOLO("best.pt")  # Replace with your model path
 class VideoProcessor(VideoProcessorBase):
     def __init__(self):
         self.model = model
+        self.webcam_url = "http://localhost:5000/video_feed"  # Replace with your webcam API URL
 
     def recv(self, frame):
+        # Fetch the video frame from the webcam API
+        response = requests.get(self.webcam_url, stream=True)
+        image_bytes = BytesIO(response.content)
+        img = Image.open(image_bytes)
+        img = np.array(img)
+
         # Convert the frame to RGB
-        img = frame.to_ndarray(format="bgr24")
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         # Perform face detection
@@ -33,11 +42,8 @@ class VideoProcessor(VideoProcessorBase):
 def app():
     st.title("Real-Time Face Detection with YOLO")
 
-    # URL to the webcam streaming API
-    webcam_url = "http://localhost:5000/video_feed"  # Replace with your webcam API URL
-
     # Create a Streamlit WebRTC video streamer
-    webrtc_streamer(key="video", video_processor_factory=VideoProcessor, video_source=webcam_url)
+    webrtc_streamer(key="video", video_processor_factory=VideoProcessor)
 
 if __name__ == "__main__":
     app()
