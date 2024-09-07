@@ -1,37 +1,48 @@
 import streamlit as st
-import streamlit.components.v1 as components
+from PIL import Image
+import numpy as np
+import cv2
+import torch
+from ultralytics import YOLO
 
-st.title("Real-Time Webcam Stream")
+# Load YOLO model (replace with the correct path to your model)
+model = YOLO("path/to/your/yolov8n.pt")
 
-html_string = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Webcam Stream</title>
-</head>
-<body>
-    <video id="webcam" width="640" height="480" autoplay></video>
-    <canvas id="canvas" width="640" height="480"></canvas>
-    <script>
-        const video = document.getElementById('webcam');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+def detect_faces(image):
+    # Convert the image to a format suitable for YOLO
+    img_np = np.array(image)
+    img_rgb = cv2.cvtColor(img_np, cv2.COLOR_BGR2RGB)
+    
+    # Perform face detection
+    results = model(img_rgb, imgsz=640)
+    
+    # Draw bounding boxes
+    for result in results:
+        for box in result.boxes:
+            x_min, y_min, x_max, y_max = map(int, box.xyxy[0])
+            confidence = box.conf[0].item()
+            cv2.rectangle(img_np, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
+            label = f"Confidence: {confidence:.2f}"
+            cv2.putText(img_np, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    
+    return img_np
 
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-                video.onloadedmetadata = () => {
-                    video.play();
-                    setInterval(() => {
-                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        // You can send the canvas data to the server here if needed
-                    }, 1000 / 30); // 30 FPS
-                };
-            })
-            .catch(error => console.error('Error accessing webcam:', error));
-    </script>
-</body>
-</html>
-"""
+def app():
+    st.title("Face Detection with YOLO")
 
-components.html(html_string, height=500)
+    uploaded_image = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+
+    if uploaded_image:
+        # Load the uploaded image
+        image = Image.open(uploaded_image)
+        st.image(image, caption="Uploaded Image", use_column_width=True)
+        
+        # Perform face detection
+        detected_image = detect_faces(image)
+        detected_image_pil = Image.fromarray(detected_image)
+        
+        # Display the detected image
+        st.image(detected_image_pil, caption="Detected Faces", use_column_width=True)
+
+if __name__ == "__main__":
+    app()
