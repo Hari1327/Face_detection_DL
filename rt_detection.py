@@ -6,7 +6,7 @@ import torch
 from ultralytics import YOLO
 
 # Load YOLO model (replace with the correct path to your model)
-model = YOLO("path/to/your/yolov8n.pt")
+model = YOLO("best.pt")
 
 def detect_faces(image):
     # Convert the image to a format suitable for YOLO
