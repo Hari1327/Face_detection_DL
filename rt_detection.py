@@ -28,7 +28,7 @@ def app():
     stframe = st.empty()
 
     # Open webcam
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
     if not cap.isOpened():
         st.error("Error: Could not open webcam.")
         return
