@@ -2,7 +2,8 @@ import os
 import sys
 import streamlit as st
 from pathlib import Path
-import Image_detection,video_detection
+import Image_detection
+import video_detection
 from streamlit_option_menu import option_menu
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='TRUE'
