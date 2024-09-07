@@ -2,48 +2,53 @@ import streamlit as st
 import cv2
 import numpy as np
 from ultralytics import YOLO
-from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
-import requests
-from io import BytesIO
 from PIL import Image
 
 # Load YOLO model
 model = YOLO("best.pt")  # Replace with your model path
 
-class VideoProcessor(VideoProcessorBase):
-    def __init__(self):
-        self.model = model
-        self.webcam_url = "http://localhost:5000/video_feed"  # Replace with your webcam API URL
+def process_frame(frame):
+    img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = model(img_rgb, imgsz=640)
 
-    def recv(self, frame):
-        # Fetch the video frame from the webcam API
-        response = requests.get(self.webcam_url, stream=True)
-        image_bytes = BytesIO(response.content)
-        img = Image.open(image_bytes)
-        img = np.array(img)
+    for result in results:
+        for box in result.boxes:
+            x_min, y_min, x_max, y_max = map(int, box.xyxy[0])
+            confidence = box.conf[0].item()
+            cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
+            label = f"Confidence: {confidence:.2f}"
+            cv2.putText(frame, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        # Convert the frame to RGB
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-        # Perform face detection
-        results = self.model(img_rgb, imgsz=640)
-
-        # Draw bounding boxes
-        for result in results:
-            for box in result.boxes:
-                x_min, y_min, x_max, y_max = map(int, box.xyxy[0])
-                confidence = box.conf[0].item()
-                cv2.rectangle(img, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
-                label = f"Confidence: {confidence:.2f}"
-                cv2.putText(img, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
-        return frame.from_ndarray(img, format="bgr24")
+    return frame
 
 def app():
     st.title("Real-Time Face Detection with YOLO")
 
-    # Create a Streamlit WebRTC video streamer
-    webrtc_streamer(key="video", video_processor_factory=VideoProcessor)
+    # Create a placeholder for the webcam feed
+    stframe = st.empty()
+
+    # Open webcam
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        st.error("Error: Could not open webcam.")
+        return
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            st.error("Error: Could not read frame.")
+            break
+
+        frame = process_frame(frame)
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        stframe.image(frame_rgb, channels="RGB", use_column_width=True)
+
+        # Allow stopping the stream
+        if st.button('Stop Stream'):
+            break
+
+    cap.release()
+    st.success("Stream stopped")
 
 if __name__ == "__main__":
     app()
