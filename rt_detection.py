@@ -1,13 +1,17 @@
 import streamlit as st
-import numpy as np
 import requests
 from PIL import Image
+from io import BytesIO
 
 def fetch_video_frame():
     # Fetch video frame from the cloud-based video service
     response = requests.get("http://example.com/video_frame")
-    image = Image.open(BytesIO(response.content))
-    return image
+    if response.status_code == 200:
+        image = Image.open(BytesIO(response.content))
+        return image
+    else:
+        st.error("Failed to fetch video frame")
+        return None
 
 def app():
     st.title("Real-Time Face Detection with YOLO")
@@ -16,9 +20,9 @@ def app():
     stframe = st.empty()
 
     while True:
-        # Fetch and display video frame
         frame = fetch_video_frame()
-        stframe.image(frame, use_column_width=True)
+        if frame:
+            stframe.image(frame, use_column_width=True)
 
         if st.button('Stop Stream'):
             break
