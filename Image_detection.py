@@ -1,10 +1,11 @@
 import streamlit as st
 from ultralytics import YOLO
 import cv2
+from PIL import Image
 import numpy as np
 
 # Load the YOLO model
-model = YOLO("best.pt")  # Ensure the path is correct for your model
+model = YOLO("best.pt")  # Make sure the path is correct to your model
 
 # Function to perform face detection
 def face_detection(uploaded_image):
@@ -30,17 +31,14 @@ def face_detection(uploaded_image):
 
 # The app function to be called in main.py
 def app():
-    st.title("Upload the Image and Detect Faces")
+    st.title("Upload the image and Detect Faces")
     file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
 
     if file:
-        image = np.array(Image.open(file))  # Convert PIL image to numpy array
+        image = Image.open(file)
         st.image(image, caption='Uploaded Image', use_column_width=True)
 
         if st.button("Detect Faces"):
             detected_image = face_detection(image)
             detected_image_rgb = cv2.cvtColor(detected_image, cv2.COLOR_BGR2RGB)
             st.image(detected_image_rgb, caption='Detected Faces', use_column_width=True)
-
-if __name__ == "__main__":
-    app()
