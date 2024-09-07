@@ -1,54 +1,39 @@
 import streamlit as st
-import cv2
-import numpy as np
-from ultralytics import YOLO
-from PIL import Image
+import streamlit.components.v1 as components
 
-# Load YOLO model
-model = YOLO("path/to/your/yolov8n.pt")  # Replace with your model path
+st.title("Real-Time Webcam Stream")
 
-def process_frame(frame):
-    img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    results = model(img_rgb, imgsz=640)
+# HTML + JavaScript to access the webcam
+html_string = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Webcam Stream</title>
+</head>
+<body>
+    <video id="webcam" width="640" height="480" autoplay></video>
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <script>
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
 
-    for result in results:
-        for box in result.boxes:
-            x_min, y_min, x_max, y_max = map(int, box.xyxy[0])
-            confidence = box.conf[0].item()
-            cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
-            label = f"Confidence: {confidence:.2f}"
-            cv2.putText(frame, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                    setInterval(() => {
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        // You can send the canvas data to the server here if needed
+                    }, 1000 / 30); // 30 FPS
+                };
+            })
+            .catch(error => console.error('Error accessing webcam:', error));
+    </script>
+</body>
+</html>
+"""
 
-    return frame
-
-def app():
-    st.title("Real-Time Face Detection with YOLO")
-
-    # Create a placeholder for the webcam feed
-    stframe = st.empty()
-
-    # Open webcam
-    cap = cv2.VideoCapture(1)
-    if not cap.isOpened():
-        st.error("Error: Could not open webcam.")
-        return
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            st.error("Error: Could not read frame.")
-            break
-
-        frame = process_frame(frame)
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        stframe.image(frame_rgb, channels="RGB", use_column_width=True)
-
-        # Allow stopping the stream
-        if st.button('Stop Stream'):
-            break
-
-    cap.release()
-    st.success("Stream stopped")
-
-if __name__ == "__main__":
-    app()
+# Embed the HTML + JavaScript into the Streamlit app
+components.html(html_string, height=500)
