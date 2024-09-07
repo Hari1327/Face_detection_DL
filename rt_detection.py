@@ -1,7 +1,6 @@
 import streamlit as st
 from ultralytics import YOLO
 import cv2
-import tempfile
 import numpy as np
 
 def process_frame(frame, model):
@@ -36,7 +35,7 @@ def app():
     stframe = st.empty()  # Placeholder to display video frames
 
     # Process video frames in real-time
-    while True:
+    while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             st.write("Failed to capture video")
@@ -51,13 +50,12 @@ def app():
         # Display the processed frame in Streamlit
         stframe.image(processed_frame, channels="RGB", use_column_width=True)
 
-        # Exit if the user presses "q"
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        # Adding a stop button to exit the loop
+        if st.button('Stop'):
             break
 
     # Release the webcam when done
     cap.release()
-    cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     app()
