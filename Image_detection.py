@@ -34,7 +34,7 @@ def face_detection_image(image_file):
     return image_np
 
 # Streamlit app for image face detection
-def app_image():
+def app():
     st.title("Image Face Detection")
 
     # Image uploader
