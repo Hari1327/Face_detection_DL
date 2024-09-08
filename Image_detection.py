@@ -13,7 +13,7 @@ def face_detection(uploaded_image, conf_threshold=0.25):
     img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
 
     # Resize the image to higher resolution
-    img_resized = cv2.resize(img_bgr, (1280, 720))
+    img_resized = cv2.resize(img_bgr, (1280, 1920))
 
     # Perform face detection with a lower confidence threshold
     results = model(img_resized, imgsz=1280, conf=conf_threshold)
