@@ -59,7 +59,7 @@ def app():
     st.title("Video Face Detection App")
 
     # Add a slider to adjust confidence threshold with unique key
-    conf_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01, key="confidence_slider")
+    conf_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01, key="confidence_slider_video")
 
     # Video upload
     uploaded_video = st.file_uploader("Upload a Video", type=["mp4", "mov", "avi"], key="video_uploader")
