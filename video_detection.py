@@ -31,7 +31,7 @@ def process_video(video_path, conf_threshold=0.25, model_path='best_50.pt'):
             break
         
         # Perform face detection using the YOLO model with confidence threshold
-        results = model(frame, imgsz=640, conf=conf_threshold)
+        results = model(frame, imgsz=1280, conf=conf_threshold)
 
         # Draw bounding boxes and confidence scores
         for result in results:
