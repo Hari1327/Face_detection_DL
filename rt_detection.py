@@ -31,7 +31,7 @@ def app():
     st.title("Webcam Face Detection App")
 
     # Add a slider to adjust the confidence threshold
-    confi_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01)
+    confi_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01,key="confidence_slider_live")
 
     # Capture an image from the webcam
     webcam_image = st.camera_input("Take a picture")
