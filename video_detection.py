@@ -58,11 +58,11 @@ def process_video(video_path, conf_threshold=0.25, model_path='best.pt'):
 def app():
     st.title("Video Face Detection App")
 
-    # Add a slider to adjust confidence threshold
-    conf_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01)
+    # Add a slider to adjust confidence threshold with unique key
+    conf_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01, key="confidence_slider")
 
     # Video upload
-    uploaded_video = st.file_uploader("Upload a Video", type=["mp4", "mov", "avi"])
+    uploaded_video = st.file_uploader("Upload a Video", type=["mp4", "mov", "avi"], key="video_uploader")
     if uploaded_video is not None:
         # Save the uploaded video to a temporary file
         temp_video = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
@@ -85,7 +85,8 @@ def app():
             label="Download Processed Video",
             data=video_bytes,
             file_name="processed_video.mp4",
-            mime="video/mp4"
+            mime="video/mp4",
+            key="download_button"
         )
 
 if __name__ == "__main__":
