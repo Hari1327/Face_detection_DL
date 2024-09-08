@@ -1,11 +1,9 @@
 import streamlit as st
 import cv2
-import numpy as np
 from PIL import Image
+import numpy as np
 from ultralytics import YOLO
-import tempfile
 import io
-from io import BytesIO
 
 # Load the YOLO model
 model = YOLO("best_50.pt")  # Ensure model path is correct
@@ -28,7 +26,7 @@ def face_detection(frame, conf_threshold=0.25):
 
 # Function to convert image to streamlit compatible format
 def image_to_bytes(image):
-    buffer = BytesIO()
+    buffer = io.BytesIO()
     Image.fromarray(image).save(buffer, format="PNG")
     return buffer.getvalue()
 
@@ -39,57 +37,30 @@ def app():
     # Add a slider to adjust the confidence threshold
     conf_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01,key="slider_confidence")
 
-    # Streamlit's HTML and JavaScript to capture live video
-    st.markdown("""
-        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-        <script>
-        let video;
-        let canvas;
-        let context;
-        let stream;
-        let imageData;
+    # Capture the video stream from the webcam
+    video_file = st.camera_input("Capture a video")
 
-        async function setup() {
-            video = document.createElement('video');
-            video.width = 640;
-            video.height = 480;
-            document.body.appendChild(video);
-            canvas = document.createElement('canvas');
-            canvas.width = video.width;
-            canvas.height = video.height;
-            context = canvas.getContext('2d');
-            document.body.appendChild(canvas);
+    if video_file:
+        # Convert video file to a byte stream
+        video_bytes = video_file.read()
+        video_buffer = io.BytesIO(video_bytes)
+        
+        # Open the video stream using OpenCV
+        cap = cv2.VideoCapture(video_buffer)
+        
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+            
+            # Process frame
+            detected_frame = face_detection(frame, conf_threshold=conf_threshold)
+            detected_frame_rgb = cv2.cvtColor(detected_frame, cv2.COLOR_BGR2RGB)
 
-            stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            video.srcObject = stream;
-            video.play();
-
-            const interval = setInterval(() => {
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                imageData = canvas.toDataURL('image/png');
-                Streamlit.setComponentValue(imageData);
-            }, 100);
-        }
-
-        setup();
-        </script>
-    """, unsafe_allow_html=True)
-
-    # Capture the image data
-    image_data = st.experimental_get_query_params().get('imageData')
-
-    if image_data:
-        # Decode the image data
-        image_data = image_data[0].split(',')[1]
-        image_bytes = BytesIO(base64.b64decode(image_data))
-        image = Image.open(image_bytes)
-
-        # Convert to NumPy array and process
-        frame = np.array(image)
-        detected_frame = face_detection(frame, conf_threshold=conf_threshold)
-
-        # Display the result
-        st.image(image_to_bytes(detected_frame), caption='Detected Faces', use_column_width=True)
+            # Display the result
+            st.image(image_to_bytes(detected_frame_rgb), caption='Detected Faces', use_column_width=True)
+        
+        cap.release()
 
 if __name__ == "__main__":
     app()
