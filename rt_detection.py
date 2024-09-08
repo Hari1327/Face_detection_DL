@@ -30,11 +30,11 @@ def face_detection(uploaded_image, conf_threshold=0.25):
 def app():
     st.title("Webcam Face Detection App")
 
-    # Add a slider to adjust the confidence threshold
-    confi_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01,key="confidence_slider_live")
+    # Add a slider to adjust the confidence threshold with a unique key
+    conf_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01, key="slider_confidence")
 
     # Capture an image from the webcam
-    webcam_image = st.camera_input("Take a picture")
+    webcam_image = st.camera_input("Take a picture", key="webcam_input")
 
     if webcam_image:
         # Convert the webcam image to PIL Image
@@ -44,7 +44,7 @@ def app():
         st.image(image, caption='Captured Image', use_column_width=True)
 
         # Perform face detection
-        detected_image = face_detection(image, confi_threshold=conf_threshold)
+        detected_image = face_detection(image, conf_threshold=conf_threshold)
 
         # Convert BGR image back to RGB for displaying
         detected_image_rgb = cv2.cvtColor(detected_image, cv2.COLOR_BGR2RGB)
