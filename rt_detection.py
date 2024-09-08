@@ -30,27 +30,33 @@ def face_detection(uploaded_image, conf_threshold=0.25):
 def app():
     st.title("Webcam Face Detection App")
 
-    # Add a slider to adjust the confidence threshold with a unique key
+    # Add a checkbox to enable/disable webcam
+    webcam_enabled = st.checkbox("Enable Webcam", value=True)
+
+    # Add a slider to adjust the confidence threshold
     conf_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01, key="slider_confidence")
 
-    # Capture an image from the webcam
-    webcam_image = st.camera_input("Take a picture", key="webcam_input")
+    if webcam_enabled:
+        # Capture an image from the webcam
+        webcam_image = st.camera_input("Take a picture", key="webcam_input")
 
-    if webcam_image:
-        # Convert the webcam image to PIL Image
-        image = Image.open(webcam_image)
+        if webcam_image:
+            # Convert the webcam image to PIL Image
+            image = Image.open(webcam_image)
 
-        # Show the original captured image
-        st.image(image, caption='Captured Image', use_column_width=True)
+            # Show the original captured image
+            st.image(image, caption='Captured Image', use_column_width=True)
 
-        # Perform face detection
-        detected_image = face_detection(image, conf_threshold=conf_threshold)
+            # Perform face detection
+            detected_image = face_detection(image, conf_threshold=conf_threshold)
 
-        # Convert BGR image back to RGB for displaying
-        detected_image_rgb = cv2.cvtColor(detected_image, cv2.COLOR_BGR2RGB)
+            # Convert BGR image back to RGB for displaying
+            detected_image_rgb = cv2.cvtColor(detected_image, cv2.COLOR_BGR2RGB)
 
-        # Show the detected faces image
-        st.image(detected_image_rgb, caption='Detected Faces', use_column_width=True)
+            # Show the detected faces image
+            st.image(detected_image_rgb, caption='Detected Faces', use_column_width=True)
+    else:
+        st.write("Webcam is disabled. Check the box to enable it.")
 
 # To run the app
 if __name__ == "__main__":
