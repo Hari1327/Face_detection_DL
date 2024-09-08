@@ -7,16 +7,24 @@ import numpy as np
 # Load the YOLO model
 model = YOLO("best_50.pt")  # Ensure model path is correct
 
+# Function to maintain aspect ratio when resizing
+def resize_with_aspect_ratio(image, target_width=1280):
+    height, width = image.shape[:2]
+    aspect_ratio = height / width
+    target_height = int(target_width * aspect_ratio)
+    resized_image = cv2.resize(image, (target_width, target_height))
+    return resized_image
+
 # Function to perform face detection
 def face_detection(uploaded_image, conf_threshold=0.25):
     img_array = np.array(uploaded_image)
     img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
 
-    # Resize the image to higher resolution
-    img_resized = cv2.resize(img_bgr, (1280, 720))
+    # Resize the image while maintaining aspect ratio
+    img_resized = resize_with_aspect_ratio(img_bgr)
 
     # Perform face detection with a lower confidence threshold
-    results = model(img_resized, imgsz=1280, conf=conf_threshold)
+    results = model(img_resized, imgsz=img_resized.shape[1], conf=conf_threshold)
 
     # Draw bounding boxes and confidence scores
     for result in results:
