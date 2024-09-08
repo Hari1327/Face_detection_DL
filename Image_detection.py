@@ -34,7 +34,7 @@ def app():
     st.title("Upload the Image and Detect Faces")
     
     # Add a slider to adjust confidence threshold
-    conf_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01)
+    conf_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01,key="confidence_slider_images")
 
     file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
 
