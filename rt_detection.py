@@ -1,18 +1,18 @@
 import streamlit as st
-from ultralytics import YOLO
 import cv2
 import numpy as np
 from PIL import Image
+from ultralytics import YOLO
+import tempfile
+import io
+from io import BytesIO
 
 # Load the YOLO model
 model = YOLO("best_50.pt")  # Ensure model path is correct
 
 # Function to perform face detection
-def face_detection(uploaded_image, conf_threshold=0.25):
-    img_array = np.array(uploaded_image)
-    img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
-
-    # Perform face detection
+def face_detection(frame, conf_threshold=0.25):
+    img_bgr = frame
     results = model(img_bgr, imgsz=640, conf=conf_threshold)
 
     # Draw bounding boxes and confidence scores
@@ -26,38 +26,70 @@ def face_detection(uploaded_image, conf_threshold=0.25):
 
     return img_bgr
 
-# Streamlit app to capture webcam input and perform detection
-def app():
-    st.title("Webcam Face Detection App")
+# Function to convert image to streamlit compatible format
+def image_to_bytes(image):
+    buffer = BytesIO()
+    Image.fromarray(image).save(buffer, format="PNG")
+    return buffer.getvalue()
 
-    # Add a checkbox to enable/disable webcam
-    webcam_enabled = st.checkbox("Enable Webcam", value=True)
+# The app function
+def app():
+    st.title("Live Webcam Face Detection")
 
     # Add a slider to adjust the confidence threshold
-    conf_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01, key="slider_confidence")
+    conf_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01,key="slider_confidence")
 
-    if webcam_enabled:
-        # Capture an image from the webcam
-        webcam_image = st.camera_input("Take a picture", key="webcam_input")
+    # Streamlit's HTML and JavaScript to capture live video
+    st.markdown("""
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+        <script>
+        let video;
+        let canvas;
+        let context;
+        let stream;
+        let imageData;
 
-        if webcam_image:
-            # Convert the webcam image to PIL Image
-            image = Image.open(webcam_image)
+        async function setup() {
+            video = document.createElement('video');
+            video.width = 640;
+            video.height = 480;
+            document.body.appendChild(video);
+            canvas = document.createElement('canvas');
+            canvas.width = video.width;
+            canvas.height = video.height;
+            context = canvas.getContext('2d');
+            document.body.appendChild(canvas);
 
-            # Show the original captured image
-            st.image(image, caption='Captured Image', use_column_width=True)
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            video.play();
 
-            # Perform face detection
-            detected_image = face_detection(image, conf_threshold=conf_threshold)
+            const interval = setInterval(() => {
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                imageData = canvas.toDataURL('image/png');
+                Streamlit.setComponentValue(imageData);
+            }, 100);
+        }
 
-            # Convert BGR image back to RGB for displaying
-            detected_image_rgb = cv2.cvtColor(detected_image, cv2.COLOR_BGR2RGB)
+        setup();
+        </script>
+    """, unsafe_allow_html=True)
 
-            # Show the detected faces image
-            st.image(detected_image_rgb, caption='Detected Faces', use_column_width=True)
-    else:
-        st.write("Webcam is disabled. Check the box to enable it.")
+    # Capture the image data
+    image_data = st.experimental_get_query_params().get('imageData')
 
-# To run the app
+    if image_data:
+        # Decode the image data
+        image_data = image_data[0].split(',')[1]
+        image_bytes = BytesIO(base64.b64decode(image_data))
+        image = Image.open(image_bytes)
+
+        # Convert to NumPy array and process
+        frame = np.array(image)
+        detected_frame = face_detection(frame, conf_threshold=conf_threshold)
+
+        # Display the result
+        st.image(image_to_bytes(detected_frame), caption='Detected Faces', use_column_width=True)
+
 if __name__ == "__main__":
     app()
