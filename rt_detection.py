@@ -1,16 +1,18 @@
 import streamlit as st
-import cv2
-from PIL import Image
-import numpy as np
 from ultralytics import YOLO
-import io
+import cv2
+import numpy as np
+from PIL import Image
 
 # Load the YOLO model
 model = YOLO("best_50.pt")  # Ensure model path is correct
 
 # Function to perform face detection
-def face_detection(frame, conf_threshold=0.25):
-    img_bgr = frame
+def face_detection(uploaded_image, conf_threshold=0.25):
+    img_array = np.array(uploaded_image)
+    img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+
+    # Perform face detection
     results = model(img_bgr, imgsz=640, conf=conf_threshold)
 
     # Draw bounding boxes and confidence scores
@@ -24,43 +26,38 @@ def face_detection(frame, conf_threshold=0.25):
 
     return img_bgr
 
-# Function to convert image to streamlit compatible format
-def image_to_bytes(image):
-    buffer = io.BytesIO()
-    Image.fromarray(image).save(buffer, format="PNG")
-    return buffer.getvalue()
-
-# The app function
+# Streamlit app to capture webcam input and perform detection
 def app():
-    st.title("Live Webcam Face Detection")
+    st.title("Webcam Face Detection App")
+
+    # Add a checkbox to enable/disable webcam
+    webcam_enabled = st.checkbox("Enable Webcam", value=True)
 
     # Add a slider to adjust the confidence threshold
-    conf_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01,key="slider_confidence")
+    conf_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01, key="slider_confidence")
 
-    # Capture the video stream from the webcam
-    video_file = st.camera_input("Capture a video")
+    if webcam_enabled:
+        # Capture an image from the webcam
+        webcam_image = st.camera_input("Take a picture", key="webcam_input")
 
-    if video_file:
-        # Convert video file to a byte stream
-        video_bytes = video_file.read()
-        video_buffer = io.BytesIO(video_bytes)
-        
-        # Open the video stream using OpenCV
-        cap = cv2.VideoCapture(video_buffer)
-        
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
-            
-            # Process frame
-            detected_frame = face_detection(frame, conf_threshold=conf_threshold)
-            detected_frame_rgb = cv2.cvtColor(detected_frame, cv2.COLOR_BGR2RGB)
+        if webcam_image:
+            # Convert the webcam image to PIL Image
+            image = Image.open(webcam_image)
 
-            # Display the result
-            st.image(image_to_bytes(detected_frame_rgb), caption='Detected Faces', use_column_width=True)
-        
-        cap.release()
+            # Show the original captured image
+            st.image(image, caption='Captured Image', use_column_width=True)
 
+            # Perform face detection
+            detected_image = face_detection(image, conf_threshold=conf_threshold)
+
+            # Convert BGR image back to RGB for displaying
+            detected_image_rgb = cv2.cvtColor(detected_image, cv2.COLOR_BGR2RGB)
+
+            # Show the detected faces image
+            st.image(detected_image_rgb, caption='Detected Faces', use_column_width=True)
+    else:
+        st.write("Webcam is disabled. Check the box to enable it.")
+
+# To run the app
 if __name__ == "__main__":
     app()
