@@ -5,7 +5,7 @@ from PIL import Image
 import numpy as np
 
 # Load the YOLO model
-model = YOLO("best.pt")  # Make sure the path is correct to your model
+model = YOLO("best(2).pt")  # Make sure the path is correct to your model
 
 # Function to perform face detection
 def face_detection(uploaded_image):
