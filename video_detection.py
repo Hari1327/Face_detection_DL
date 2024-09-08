@@ -4,7 +4,7 @@ import cv2
 import tempfile
 import os
 
-def process_video(video_path, model_path='best.pt'):
+def process_video(video_path, conf_threshold=0.25, model_path='best.pt'):
     # Load the YOLO model
     model = YOLO(model_path)
 
@@ -30,8 +30,8 @@ def process_video(video_path, model_path='best.pt'):
         if not ret:
             break
         
-        # Perform face detection using the YOLO model
-        results = model(frame, imgsz=640)
+        # Perform face detection using the YOLO model with confidence threshold
+        results = model(frame, imgsz=640, conf=conf_threshold)
 
         # Draw bounding boxes and confidence scores
         for result in results:
@@ -58,6 +58,9 @@ def process_video(video_path, model_path='best.pt'):
 def app():
     st.title("Video Face Detection App")
 
+    # Add a slider to adjust confidence threshold
+    conf_threshold = st.slider("Confidence Threshold", min_value=0.0, max_value=1.0, value=0.25, step=0.01)
+
     # Video upload
     uploaded_video = st.file_uploader("Upload a Video", type=["mp4", "mov", "avi"])
     if uploaded_video is not None:
@@ -71,7 +74,7 @@ def app():
 
         # Detect faces and save the processed video
         st.write("Processing video...")
-        processed_video_path = process_video(uploaded_video_path)
+        processed_video_path = process_video(uploaded_video_path, conf_threshold=conf_threshold)
 
         # Read the processed video for download
         with open(processed_video_path, "rb") as file:
