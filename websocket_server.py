@@ -8,7 +8,7 @@ from ultralytics import YOLO
 import io
 
 # Load YOLOv8 model
-model = YOLO('path/to/your/yolov8_model.pt')  # Replace with your YOLOv8 model path
+model = YOLO('best_50.pt')  # Replace with your YOLOv8 model path
 
 # WebSocket URI
 WS_URI = "ws://localhost:8765"
