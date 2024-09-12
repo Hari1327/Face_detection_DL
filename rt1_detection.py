@@ -1,13 +1,21 @@
 import streamlit as st
 import cv2
 import numpy as np
-from ultralytics import YOLO
+from PIL import Image
 import base64
 
 # Load the YOLO model
+from ultralytics import YOLO
 model = YOLO("best_50.pt")
 
-# Streamlit app for real-time video detection
+# Function to decode base64 to OpenCV image
+def base64_to_cv2_image(base64_str):
+    img_bytes = base64.b64decode(base64_str.split(",")[1])
+    img_array = np.frombuffer(img_bytes, np.uint8)
+    img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+    return img
+
+# Streamlit app interface
 def app():
     st.title("Real-Time Face Detection with YOLO")
 
@@ -35,8 +43,8 @@ def app():
                 // Convert the frame to base64
                 const frameData = canvas.toDataURL('image/jpeg');
                 
-                // Send the frame to Streamlit via WebSocket
-                Streamlit.setComponentValue(frameData);
+                // Send the frame to Streamlit
+                window.parent.postMessage({ type: 'FRAME', data: frameData }, '*');
             }
 
             // Capture frames every 100ms
@@ -47,15 +55,13 @@ def app():
     # Render the HTML video capture
     st.components.v1.html(video_html, height=400)
 
-    # Process the captured frames
-    frame_data = st.experimental_get_query_params()
-    
-    if frame_data:
-        # Decode base64 image
-        frame_base64 = frame_data["image"][0].split(",")[1]
-        frame_bytes = base64.b64decode(frame_base64)
-        np_frame = np.frombuffer(frame_bytes, dtype=np.uint8)
-        frame_img = cv2.imdecode(np_frame, cv2.IMREAD_COLOR)
+    # Placeholder for the image
+    frame_placeholder = st.empty()
+
+    # Display the captured frames
+    def update_frame(base64_frame):
+        # Convert base64 image to OpenCV image
+        frame_img = base64_to_cv2_image(base64_frame)
 
         # Perform face detection using YOLO
         results = model(frame_img)
@@ -68,8 +74,22 @@ def app():
                 cv2.rectangle(frame_img, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
                 cv2.putText(frame_img, f'{confidence:.2f}', (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        # Display the detected frame
-        st.image(frame_img, channels="BGR")
+        # Convert image to RGB for displaying
+        frame_rgb = cv2.cvtColor(frame_img, cv2.COLOR_BGR2RGB)
+        frame_pil = Image.fromarray(frame_rgb)
+        
+        # Update the Streamlit placeholder with the detected frame
+        frame_placeholder.image(frame_pil, caption='Detected Faces', use_column_width=True)
+
+    # Capture and process frames from JavaScript
+    with st.experimental_singleton:
+        def process_frames():
+            while True:
+                frame_data = st.experimental_get_query_params().get('data')
+                if frame_data:
+                    update_frame(frame_data[0])
+    
+    process_frames()
 
 # Run the app
 if __name__ == "__main__":
