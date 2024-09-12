@@ -14,7 +14,7 @@ def app():
         format="%.2f"
     )
 
-    # WebSocket URL (ensure the WebSocket server is running)
+    # WebSocket URL
     ws_url = "ws://localhost:8765"
 
     st.write(f"**Confidence Threshold:** {confidence_threshold}")
@@ -28,35 +28,36 @@ def app():
             const canvas = document.getElementById('canvas');
             const context = canvas.getContext('2d');
             const ws = new WebSocket("{ws_url}");
-            ws.onmessage = function(event) {
-                const img = new Image(),
-                img.src = event.data,
-                img.onload = function() {
+
+            ws.onmessage = function(event) {{
+                const img = new Image();
+                img.src = event.data;
+                img.onload = function() {{
                     canvas.width = img.width;
                     canvas.height = img.height;
                     context.drawImage(img, 0, 0);
-                }
-            }
+                }};
+            }};
 
-            async function startCamera() {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            async function startCamera() {{
+                try {{
+                    const stream = await navigator.mediaDevices.getUserMedia({{ video: true }});
                     video.srcObject = stream;
                     video.play();
                     captureFrame();
-                } catch (error) {
+                }} catch (error) {{
                     console.error('Error accessing the webcam: ', error);
-                }
-            }
+                }}
+            }}
 
-            function captureFrame() {
+            function captureFrame() {{
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
                 const frameData = canvas.toDataURL('image/jpeg');
                 ws.send(frameData);
                 setTimeout(captureFrame, 100);  // Adjust frame capture interval as needed
-            }
+            }}
 
             startCamera();
         </script>
