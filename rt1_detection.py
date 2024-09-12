@@ -30,8 +30,8 @@ def app():
             const ws = new WebSocket("{ws_url}");
 
             ws.onmessage = function(event) {
-                const img = new Image(),
-                img.src = event.data,
+                const img = new Image();
+                img.src = event.data;
                 img.onload = function() {
                     canvas.width = img.width;
                     canvas.height = img.height;
