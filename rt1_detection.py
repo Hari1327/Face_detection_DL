@@ -1,70 +1,33 @@
 import streamlit as st
-import streamlit.components.v1 as components
+import numpy as np
+import cv2
+from PIL import Image
+import asyncio
+import websockets
 
-def app():
-    st.title("Real-Time Face Detection with YOLO")
+st.title("Face Detection with WebSocket")
 
-    # Add a slider for confidence threshold
-    confidence_threshold = st.slider(
-        "Confidence Threshold",
-        min_value=0.0,
-        max_value=1.0,
-        value=0.5,
-        step=0.01,
-        format="%.2f"
-    )
+# WebSocket server URL
+WEBSOCKET_URL = "ws://localhost:8765"
 
-    # WebSocket URL
-    ws_url = "ws://localhost:8765"
+# Function to capture and send video frames
+async def capture_frames():
+    async with websockets.connect(WEBSOCKET_URL) as websocket:
+        while True:
+            # Capture frame from webcam
+            frame = st.camera_input("Capture")
+            if frame:
+                img_bytes = frame.read()
+                base64_img = base64.b64encode(img_bytes).decode()
+                
+                # Send frame to WebSocket server
+                await websocket.send(f"data:image/jpeg;base64,{base64_img}")
 
-    st.write(f"**Confidence Threshold:** {confidence_threshold}")
+                # Receive processed frame from WebSocket server
+                response = await websocket.recv()
+                st.image(response, caption='Detected Faces', use_column_width=True)
 
-    # HTML and JavaScript for video capture and WebSocket communication
-    video_html = f"""
-        <video id="webcam" autoplay playsinline></video>
-        <canvas id="canvas"></canvas>
-        <script>
-            const video = document.getElementById('webcam');
-            const canvas = document.getElementById('canvas');
-            const context = canvas.getContext('2d');
-            const ws = new WebSocket("{ws_url}");
-
-            ws.onmessage = function(event) {{
-                const img = new Image();
-                img.src = event.data;
-                img.onload = function() {{
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    context.drawImage(img, 0, 0);
-                }};
-            }};
-
-            async function startCamera() {{
-                try {{
-                    const stream = await navigator.mediaDevices.getUserMedia({{ video: true }});
-                    video.srcObject = stream;
-                    video.play();
-                    captureFrame();
-                }} catch (error) {{
-                    console.error('Error accessing the webcam: ', error);
-                }}
-            }}
-
-            function captureFrame() {{
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const frameData = canvas.toDataURL('image/jpeg');
-                ws.send(frameData);
-                setTimeout(captureFrame, 100);  // Adjust frame capture interval as needed
-            }}
-
-            startCamera();
-        </script>
-    """
-
-    # Render the HTML video capture
-    components.html(video_html, height=400)
-
-if __name__ == "__main__":
-    app()
+# Button to start streaming
+if st.button("Start Camera"):
+    st.write("Streaming...")
+    asyncio.run(capture_frames())
