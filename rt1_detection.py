@@ -3,9 +3,9 @@ import cv2
 import numpy as np
 from PIL import Image
 import base64
+from ultralytics import YOLO
 
 # Load the YOLO model
-from ultralytics import YOLO
 model = YOLO("best_50.pt")
 
 # Function to decode base64 to OpenCV image
@@ -58,34 +58,31 @@ def app():
     # Placeholder for the image
     frame_placeholder = st.empty()
 
-    # Display the captured frames
-    def update_frame(base64_frame):
-        # Convert base64 image to OpenCV image
-        frame_img = base64_to_cv2_image(base64_frame)
-        print("Detecting faces")
-        # Perform face detection using YOLO
-        results = model(frame_img)
+    # Process frames from JavaScript
+    query_params = st.experimental_get_query_params()
+    frame_data = query_params.get('data')
+    if frame_data:
+        update_frame(frame_data[0])
 
-        # Draw bounding boxes on the detected faces
-        for result in results:
-            for box in result.boxes:
-                x_min, y_min, x_max, y_max = map(int, box.xyxy[0].tolist())
-                confidence = box.conf[0].item()
+    # Function to process and update the frame
+    def update_frame(base64_frame):
+        frame_img = base64_to_cv2_image(base64_frame)
+        
+        results = model(frame_img)
+        
+        if not results.pandas().xyxy[0].empty:
+            for _, row in results.pandas().xyxy[0].iterrows():
+                x_min, y_min, x_max, y_max = int(row['xmin']), int(row['ymin']), int(row['xmax']), int(row['ymax'])
+                confidence = row['confidence']
                 cv2.rectangle(frame_img, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
                 cv2.putText(frame_img, f'{confidence:.2f}', (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        else:
+            print("No detections found")
 
-        # Convert image to RGB for displaying
         frame_rgb = cv2.cvtColor(frame_img, cv2.COLOR_BGR2RGB)
         frame_pil = Image.fromarray(frame_rgb)
         
-        # Update the Streamlit placeholder with the detected frame
         frame_placeholder.image(frame_pil, caption='Detected Faces', use_column_width=True)
-
-    # Process frames from JavaScript
-    if st.query_params():
-        frame_data = st.query_params().get('data')
-        if frame_data:
-            update_frame(frame_data[0])
 
 # Run the app
 if __name__ == "__main__":
