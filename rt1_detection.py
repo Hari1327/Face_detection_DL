@@ -81,15 +81,11 @@ def app():
         # Update the Streamlit placeholder with the detected frame
         frame_placeholder.image(frame_pil, caption='Detected Faces', use_column_width=True)
 
-    # Capture and process frames from JavaScript
-    with st.experimental_singleton:
-        def process_frames():
-            while True:
-                frame_data = st.experimental_get_query_params().get('data')
-                if frame_data:
-                    update_frame(frame_data[0])
-    
-    process_frames()
+    # Process frames from JavaScript
+    if st.experimental_get_query_params():
+        frame_data = st.experimental_get_query_params().get('data')
+        if frame_data:
+            update_frame(frame_data[0])
 
 # Run the app
 if __name__ == "__main__":
