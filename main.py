@@ -6,6 +6,7 @@ import Image_detection
 import video_detection
 import rt_detection
 import rt1_detection
+import websocket_server
 from streamlit_option_menu import option_menu
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='TRUE'
