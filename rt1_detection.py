@@ -109,7 +109,7 @@ def app():
 
             # Perform face detection
             try:
-                results = model(frame_img)
+                results = model(frame_img, imgsz=1280)
                 detections = results.pandas().xyxy[0]
                 
                 if detections.empty:
