@@ -14,7 +14,7 @@ def app():
         format="%.2f"
     )
 
-    # WebSocket URL
+    # WebSocket URL (ensure the WebSocket server is running)
     ws_url = "ws://localhost:8765"
 
     st.write(f"**Confidence Threshold:** {confidence_threshold}")
@@ -63,6 +63,7 @@ def app():
         </script>
     """
 
+    # Render the HTML video capture
     components.html(video_html, height=400)
 
 if __name__ == "__main__":
