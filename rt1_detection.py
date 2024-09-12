@@ -2,21 +2,20 @@ import streamlit as st
 import numpy as np
 import cv2
 from PIL import Image
-from ultralytics import YOLO
-import base64
+import io
 
 # Load the YOLO model
+from ultralytics import YOLO
 model = YOLO("best_50.pt")
 
-# Function to decode base64 to OpenCV image
-def base64_to_cv2_image(base64_str):
+# Function to decode binary image data to OpenCV image
+def binary_to_cv2_image(binary_data):
     try:
-        img_bytes = base64.b64decode(base64_str.split(",")[1])
-        img_array = np.frombuffer(img_bytes, np.uint8)
+        img_array = np.frombuffer(binary_data, np.uint8)
         img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
         return img
     except Exception as e:
-        st.error(f"Error decoding base64 image: {e}")
+        st.error(f"Error decoding binary image: {e}")
         return None
 
 # Function to test if the model is running
@@ -31,7 +30,6 @@ def test_model():
 
 # Streamlit app interface
 def app():
-    # Initialize session state variables if they don't exist
     if 'camera_running' not in st.session_state:
         st.session_state['camera_running'] = False
     if 'stream_status' not in st.session_state:
@@ -82,10 +80,8 @@ def app():
                         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                         video.srcObject = stream;
                         video.play();
-                        window.parent.postMessage({ type: 'STREAM_STATUS', data: 'streaming' }, '*');
                     } catch (error) {
                         console.error('Error accessing the webcam: ', error);
-                        window.parent.postMessage({ type: 'STREAM_STATUS', data: 'error' }, '*');
                     }
                 }
 
@@ -93,8 +89,14 @@ def app():
                     canvas.width = video.videoWidth;
                     canvas.height = video.videoHeight;
                     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    const frameData = canvas.toDataURL('image/jpeg');
-                    window.parent.postMessage({ type: 'FRAME', data: frameData }, '*');
+                    canvas.toBlob(function(blob) {
+                        const reader = new FileReader();
+                        reader.onload = function() {
+                            const binaryData = reader.result;
+                            window.parent.postMessage({ type: 'FRAME', data: binaryData }, '*');
+                        };
+                        reader.readAsArrayBuffer(blob);
+                    }, 'image/jpeg');
                 }
 
                 startCamera().then(() => {
@@ -109,8 +111,8 @@ def app():
         frame_placeholder = st.empty()
 
         # Function to process and update the frame
-        def update_frame(base64_frame):
-            frame_img = base64_to_cv2_image(base64_frame)
+        def update_frame(binary_frame):
+            frame_img = binary_to_cv2_image(binary_frame)
             if frame_img is None:
                 st.write("No frames")
                 return
@@ -138,19 +140,16 @@ def app():
         # Handle incoming messages from JavaScript
         def handle_message(message):
             if message.get('type') == 'FRAME':
-                base64_frame = message.get('data')
-                if base64_frame:
-                    update_frame(base64_frame)
-            elif message.get('type') == 'STREAM_STATUS':
-                status = message.get('data')
-                st.session_state['stream_status'] = "Streaming..." if status == 'streaming' else "No stream available"
+                binary_frame = message.get('data')
+                if binary_frame:
+                    update_frame(binary_frame)
 
         # JavaScript to handle messages
         st.components.v1.html("""
             <script>
                 window.addEventListener('message', function(event) {
                     const message = event.data;
-                    if (message.type === 'FRAME' || message.type === 'STREAM_STATUS') {
+                    if (message.type === 'FRAME') {
                         window.parent.postMessage(message, '*');
                     }
                 });
