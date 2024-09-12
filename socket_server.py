@@ -17,8 +17,8 @@ async def process_frame(websocket, path):
             img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
 
             # Perform face detection
-            img_resized = cv2.resize(img, (1280, 720))
-            results = model(img_resized, imgsz=1280, conf=0.5)
+            # img_resized = cv2.resize(img, (1280, 720))
+            results = model(img_resized, imgsz=640, conf=0.5)
 
             # Draw bounding boxes
             if not results.pandas().xyxy[0].empty:
