@@ -2,17 +2,17 @@ import streamlit as st
 import numpy as np
 import cv2
 from PIL import Image
-import io
+from ultralytics import YOLO
 
 # Load the YOLO model
-from ultralytics import YOLO
 model = YOLO("best_50.pt")
 
-# Function to decode binary image data to OpenCV image
+# Function to decode binary to OpenCV image
 def binary_to_cv2_image(binary_data):
     try:
         img_array = np.frombuffer(binary_data, np.uint8)
         img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+        st.write("Received Image Size:", img.shape)
         return img
     except Exception as e:
         st.error(f"Error decoding binary image: {e}")
@@ -30,6 +30,7 @@ def test_model():
 
 # Streamlit app interface
 def app():
+    # Initialize session state variables if they don't exist
     if 'camera_running' not in st.session_state:
         st.session_state['camera_running'] = False
     if 'stream_status' not in st.session_state:
@@ -80,8 +81,10 @@ def app():
                         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                         video.srcObject = stream;
                         video.play();
+                        window.parent.postMessage({ type: 'STREAM_STATUS', data: 'streaming' }, '*');
                     } catch (error) {
                         console.error('Error accessing the webcam: ', error);
+                        window.parent.postMessage({ type: 'STREAM_STATUS', data: 'error' }, '*');
                     }
                 }
 
@@ -89,14 +92,8 @@ def app():
                     canvas.width = video.videoWidth;
                     canvas.height = video.videoHeight;
                     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    canvas.toBlob(function(blob) {
-                        const reader = new FileReader();
-                        reader.onload = function() {
-                            const binaryData = reader.result;
-                            window.parent.postMessage({ type: 'FRAME', data: binaryData }, '*');
-                        };
-                        reader.readAsArrayBuffer(blob);
-                    }, 'image/jpeg');
+                    const frameData = canvas.toDataURL('image/jpeg');
+                    window.parent.postMessage({ type: 'FRAME', data: frameData }, '*');
                 }
 
                 startCamera().then(() => {
@@ -110,15 +107,17 @@ def app():
         # Placeholder for image and detections
         frame_placeholder = st.empty()
 
-      def update_frame(binary_frame):
-            frame_img = binary_to_cv2_image(binary_frame)
+        # Function to process and update the frame
+        def update_frame(base64_frame):
+            frame_img = base64_to_cv2_image(base64_frame)
             if frame_img is None:
                 st.write("No frames")
                 return
             
             # Resize the image to 1280x720
             img_resized = cv2.resize(frame_img, (1280, 720))
-        
+            st.write("Resized Image Size:", img_resized.shape)
+
             # Perform face detection with the resized image
             results = model(img_resized, imgsz=1280, conf=confidence_threshold)
             
@@ -134,7 +133,7 @@ def app():
                     cv2.putText(img_resized, f'{confidence:.2f}', (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             else:
                 st.write("No faces detected")
-        
+
             frame_rgb = cv2.cvtColor(img_resized, cv2.COLOR_BGR2RGB)
             frame_pil = Image.fromarray(frame_rgb)
             frame_placeholder.image(frame_pil, caption='Detected Faces', use_column_width=True)
@@ -142,16 +141,19 @@ def app():
         # Handle incoming messages from JavaScript
         def handle_message(message):
             if message.get('type') == 'FRAME':
-                binary_frame = message.get('data')
-                if binary_frame:
-                    update_frame(binary_frame)
+                base64_frame = message.get('data')
+                if base64_frame:
+                    update_frame(base64_frame)
+            elif message.get('type') == 'STREAM_STATUS':
+                status = message.get('data')
+                st.session_state['stream_status'] = "Streaming..." if status == 'streaming' else "No stream available"
 
         # JavaScript to handle messages
         st.components.v1.html("""
             <script>
                 window.addEventListener('message', function(event) {
                     const message = event.data;
-                    if (message.type === 'FRAME') {
+                    if (message.type === 'FRAME' || message.type === 'STREAM_STATUS') {
                         window.parent.postMessage(message, '*');
                     }
                 });
