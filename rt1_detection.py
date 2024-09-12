@@ -53,13 +53,13 @@ def app():
     """
     
     # Render the HTML video capture
-    st.components.v1.html(video_html, width=1280, height=720)
+    st.components.v1.html(video_html, height=400)
 
     # Placeholder for the image
     frame_placeholder = st.empty()
 
     # Process frames from JavaScript
-    query_params = st.experimental_get_query_params()
+    query_params = st.query_params
     frame_data = query_params.get('data')
     if frame_data:
         update_frame(frame_data[0])
