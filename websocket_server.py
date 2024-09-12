@@ -6,7 +6,7 @@ from ultralytics import YOLO
 from io import BytesIO
 
 # Load YOLOv8 model
-model = YOLO('path/to/your/yolov8_model.pt')  # Replace with your YOLOv8 model path
+model = YOLO('best_50.pt')  # Replace with your YOLOv8 model path
 
 async def detect_faces(websocket, path):
     async for message in websocket:
