@@ -96,9 +96,10 @@ def app():
         """
         
         # Render the HTML video capture
-        st.components.v1.html(video_html, width=640, height=480)
+        st.components.v1.html(video_html, height=400)
         # Placeholder for the image
         frame_placeholder = st.empty()
+        detection_placeholder = st.empty()
 
         # Function to process and update the frame
         def update_frame(base64_frame):
@@ -109,18 +110,24 @@ def app():
 
             # Perform face detection
             try:
-                results = model(frame_img, imgsz=1280)
+                results = model(frame_img)
                 detections = results.pandas().xyxy[0]
                 
                 if detections.empty:
-                    st.write("No faces detected")
+                    detection_placeholder.write("No faces detected")
                 else:
+                    detection_text = ""
                     for _, row in detections.iterrows():
                         confidence = row['confidence']
                         if confidence >= confidence_threshold:
                             x_min, y_min, x_max, y_max = int(row['xmin']), int(row['ymin']), int(row['xmax']), int(row['ymax'])
                             cv2.rectangle(frame_img, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
                             cv2.putText(frame_img, f'{confidence:.2f}', (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                            detection_text += f"Face detected: Confidence {confidence:.2f} at ({x_min}, {y_min}) to ({x_max}, {y_max})\n"
+
+                    # Show detection results
+                    detection_placeholder.text(detection_text)
+                    
             except Exception as e:
                 st.error(f"Error during model inference: {e}")
                 return
