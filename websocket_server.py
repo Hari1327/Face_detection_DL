@@ -4,7 +4,6 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 from io import BytesIO
-import threading
 
 # Load YOLOv8 model
 model = YOLO('path/to/your/yolov8_model.pt')  # Replace with your YOLOv8 model path
@@ -28,12 +27,9 @@ async def detect_faces(websocket, path):
         # Send the image back to the client
         await websocket.send(img_bytes)
 
-def start_server():
-    start_server = websockets.serve(detect_faces, "localhost", 8765)
-    asyncio.get_event_loop().run_until_complete(start_server)
-    asyncio.get_event_loop().run_forever()
+async def main():
+    server = await websockets.serve(detect_faces, "localhost", 8765)
+    await server.wait_closed()
 
 if __name__ == "__main__":
-    # Run WebSocket server in a separate thread
-    server_thread = threading.Thread(target=start_server)
-    server_thread.start()
+    asyncio.run(main())
