@@ -112,25 +112,33 @@ def app():
         def update_frame(base64_frame):
             frame_img = base64_to_cv2_image(base64_frame)
             if frame_img is None:
+                print("No frames")
                 return
-        
-            # Resize the image to 1280x720
-            frame_img = cv2.resize(frame_img, (1280, 720))
-        
-            # Perform face detection
-            results = model(frame_img)
-            if results.pandas().xyxy[0].empty:
-                st.write("No faces detected")
+                
             else:
-                for _, row in results.pandas().xyxy[0].iterrows():
-                    x_min, y_min, x_max, y_max = int(row['xmin']), int(row['ymin']), int(row['xmax']), int(row['ymax'])
-                    confidence = row['confidence']
-                    cv2.rectangle(frame_img, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
-                    cv2.putText(frame_img, f'{confidence:.2f}', (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-        
-            frame_rgb = cv2.cvtColor(frame_img, cv2.COLOR_BGR2RGB)
-            frame_pil = Image.fromarray(frame_rgb)
-            frame_placeholder.image(frame_pil, caption='Detected Faces', use_column_width=True)
+                img_array = np.array(frame_img)
+                img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+            
+                # Resize the image to higher resolution
+                img_resized = cv2.resize(img_bgr, (1280, 720))
+            
+                # Perform face detection with a lower confidence threshold
+                results = model(img_resized, imgsz=1280, conf=conf_threshold)
+                    
+                # Perform face detection
+                results = model(frame_img)
+                if results.pandas().xyxy[0].empty:
+                    st.write("No faces detected")
+                else:
+                    for _, row in results.pandas().xyxy[0].iterrows():
+                        x_min, y_min, x_max, y_max = int(row['xmin']), int(row['ymin']), int(row['xmax']), int(row['ymax'])
+                        confidence = row['confidence']
+                        cv2.rectangle(frame_img, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
+                        cv2.putText(frame_img, f'{confidence:.2f}', (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            
+                frame_rgb = cv2.cvtColor(frame_img, cv2.COLOR_BGR2RGB)
+                frame_pil = Image.fromarray(frame_rgb)
+                frame_placeholder.image(frame_pil, caption='Detected Faces', use_column_width=True)
 
 
         # Handle incoming messages from JavaScript
