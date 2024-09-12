@@ -53,7 +53,7 @@ def app():
     """
     
     # Render the HTML video capture
-    st.components.v1.html(video_html, height=400)
+    st.components.v1.html(video_html, width=1280, height=720)
 
     # Placeholder for the image
     frame_placeholder = st.empty()
@@ -62,7 +62,7 @@ def app():
     def update_frame(base64_frame):
         # Convert base64 image to OpenCV image
         frame_img = base64_to_cv2_image(base64_frame)
-
+        print("Detecting faces")
         # Perform face detection using YOLO
         results = model(frame_img)
 
@@ -83,7 +83,7 @@ def app():
 
     # Process frames from JavaScript
     if st.experimental_get_query_params():
-        frame_data = st.experimental_get_query_params().get('data')
+        frame_data = st.query_params().get('data')
         if frame_data:
             update_frame(frame_data[0])
 
