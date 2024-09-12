@@ -115,11 +115,11 @@ def app():
                 return
             
             # Resize the image to 1280x720
-            img_resized = cv2.resize(frame_img, (1280, 720))
+            img_resized = cv2.resize(frame_img, (640, 480))
             st.write("Resized Image Size:", img_resized.shape)
 
             # Perform face detection with the resized image
-            results = model(img_resized, imgsz=1280, conf=confidence_threshold)
+            results = model(img_resized, imgsz=640, conf=confidence_threshold)
             
             # Print results for debugging
             st.write("Detection Results:", results.pandas().xyxy[0])
