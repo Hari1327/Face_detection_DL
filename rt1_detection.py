@@ -1,6 +1,4 @@
 import streamlit as st
-import cv2
-import numpy as np
 import asyncio
 import websockets
 from PIL import Image
@@ -20,7 +18,7 @@ def get_frame():
     return asyncio.run(receive_frame())
 
 def app():
-    st.title("Real-Time Face Detection with YOLO")
+    st.title("Real-Time Face Detection with YOLOv8")
 
     # Display the video feed
     stframe = st.empty()
