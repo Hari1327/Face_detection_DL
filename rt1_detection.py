@@ -120,7 +120,6 @@ def app():
                 results = model(frame_img)
                 detections = results.pandas().xyxy[0]
 
-                # Draw detections
                 if detections.empty:
                     detection_placeholder.write("No faces detected")
                 else:
