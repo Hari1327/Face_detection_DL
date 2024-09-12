@@ -137,6 +137,7 @@ def app():
 
         # Handle incoming messages from JavaScript
         def handle_message(message):
+            st.write(message)
             if message.get('type') == 'FRAME':
                 base64_frame = message.get('data')
                 if base64_frame:
