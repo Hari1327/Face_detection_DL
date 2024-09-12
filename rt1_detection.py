@@ -31,6 +31,12 @@ def test_model():
 
 # Streamlit app interface
 def app():
+    # Initialize session state variables if they don't exist
+    if 'camera_running' not in st.session_state:
+        st.session_state['camera_running'] = False
+    if 'stream_status' not in st.session_state:
+        st.session_state['stream_status'] = "No stream available"
+
     st.title("Real-Time Face Detection with YOLO")
 
     # Add a slider for confidence threshold
@@ -46,11 +52,6 @@ def app():
     # Add a button to start/stop the webcam
     start_camera = st.button("Start Camera")
     stop_camera = st.button("Stop Camera")
-
-    # Initialize camera status
-    if 'camera_running' not in st.session_state:
-        st.session_state['camera_running'] = False
-        st.session_state['stream_status'] = "No stream available"
 
     if start_camera:
         st.session_state['camera_running'] = True
