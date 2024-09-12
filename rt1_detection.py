@@ -28,16 +28,15 @@ def app():
             const canvas = document.getElementById('canvas');
             const context = canvas.getContext('2d');
             const ws = new WebSocket("{ws_url}");
-
             ws.onmessage = function(event) {
-                const img = new Image();
-                img.src = event.data;
+                const img = new Image(),
+                img.src = event.data,
                 img.onload = function() {
                     canvas.width = img.width;
                     canvas.height = img.height;
                     context.drawImage(img, 0, 0);
-                };
-            };
+                }
+            }
 
             async function startCamera() {
                 try {
