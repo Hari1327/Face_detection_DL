@@ -9,7 +9,7 @@ from ultralytics import YOLO
 import base64
 
 # Load YOLOv8 model
-model = YOLO('path/to/your/yolov8_model.pt')  # Replace with your YOLOv8 model path
+model = YOLO('best_50.pt')  # Replace with your YOLOv8 model path
 
 def detect_faces(image):
     # Perform face detection
