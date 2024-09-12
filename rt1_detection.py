@@ -43,7 +43,7 @@ def video_frame():
 
 
 # Streamlit interface
-def streamlit_app():
+def app():
     st.title("Real-time Video Face Detection")
 
     # Display HTML component for capturing video
