@@ -109,7 +109,7 @@ def app():
 
         # Function to process and update the frame
         def update_frame(base64_frame):
-            frame_img = base64_to_cv2_image(base64_frame)
+            frame_img = binary_to_cv2_image(base64_frame)
             if frame_img is None:
                 st.write("No frames")
                 return
