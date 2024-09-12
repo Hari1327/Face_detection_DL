@@ -5,7 +5,7 @@ from pathlib import Path
 import Image_detection
 import video_detection
 import rt_detection
-import rt1_detection
+import rt1_detection,rt2_detection
 from streamlit_option_menu import option_menu
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='TRUE'
