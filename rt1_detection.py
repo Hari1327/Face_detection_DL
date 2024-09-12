@@ -23,7 +23,7 @@ def base64_to_cv2_image(base64_str):
 def test_model():
     try:
         # Create a dummy image (black square)
-        dummy_img = np.zeros((640, 480, 3), dtype=np.uint8)
+        dummy_img = base64_to_cv2_image(base64_frame)
         results = model(dummy_img)
         return True, "Model is running"
     except Exception as e:
@@ -120,7 +120,7 @@ def app():
             
             # Perform face detection with the resized image
             results = model(img_resized, imgsz=1280, conf=confidence_threshold)
-
+            st.write(results)
             # Draw bounding boxes and labels on detected faces
             if not results.pandas().xyxy[0].empty:
                 for _, row in results.pandas().xyxy[0].iterrows():
