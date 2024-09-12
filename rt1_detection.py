@@ -96,7 +96,7 @@ def app():
         """
         
         # Render the HTML video capture
-        st.components.v1.html(video_html, width=640)
+        st.components.v1.html(video_html)
         # Placeholder for the image
         frame_placeholder = st.empty()
         detection_placeholder = st.empty()
