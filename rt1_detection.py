@@ -83,7 +83,7 @@ def app():
 
     # Process frames from JavaScript
     if st.experimental_get_query_params():
-        frame_data = st.experimental_get_query_params().get('data')
+        frame_data = st.query_params().get('data')
         if frame_data:
             update_frame(frame_data[0])
 
