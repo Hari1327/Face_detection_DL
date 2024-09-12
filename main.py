@@ -5,7 +5,7 @@ from pathlib import Path
 import Image_detection
 import video_detection
 import rt_detection
-import rt1_detection,rt2_detection
+import rt1_detection
 from streamlit_option_menu import option_menu
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='TRUE'
@@ -53,4 +53,4 @@ app = MultiApp()
 app.add_app("IMAGE Detection", Image_detection.app())
 app.add_app("VIDEO Detection", video_detection.app())
 app.add_app("Capture Detection", rt_detection.app())
-app.add_app("Capture Detection", rt2_detection.app())
+app.add_app("Capture Detection", rt1_detection.app())
