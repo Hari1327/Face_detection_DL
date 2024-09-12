@@ -28,7 +28,8 @@ async def detect_faces(websocket, path):
         await websocket.send(img_bytes)
 
 async def main():
-    server = await websockets.serve(detect_faces, "localhost", 8765)
+    # Bind to all network interfaces
+    server = await websockets.serve(detect_faces, "0.0.0.0", 8765)
     await server.wait_closed()
 
 if __name__ == "__main__":
