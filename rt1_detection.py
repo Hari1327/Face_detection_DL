@@ -20,7 +20,7 @@ def base64_to_cv2_image(base64_str):
         return None
 
 # Function to test if the model is running
-def test_model():
+def test_model(base64_frame):
     try:
         # Create a dummy image (black square)
         dummy_img = base64_to_cv2_image(base64_frame)
@@ -140,7 +140,9 @@ def app():
             if message.get('type') == 'FRAME':
                 base64_frame = message.get('data')
                 if base64_frame:
+                    test_model(base64_frame)
                     update_frame(base64_frame)
+                    
             elif message.get('type') == 'STREAM_STATUS':
                 status = message.get('data')
                 st.session_state['stream_status'] = "Streaming..." if status == 'streaming' else "No stream available"
