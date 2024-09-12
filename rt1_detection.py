@@ -110,8 +110,7 @@ def app():
         # Placeholder for image and detections
         frame_placeholder = st.empty()
 
-        # Function to process and update the frame
-        def update_frame(binary_frame):
+      def update_frame(binary_frame):
             frame_img = binary_to_cv2_image(binary_frame)
             if frame_img is None:
                 st.write("No frames")
@@ -119,9 +118,12 @@ def app():
             
             # Resize the image to 1280x720
             img_resized = cv2.resize(frame_img, (1280, 720))
-
+        
             # Perform face detection with the resized image
             results = model(img_resized, imgsz=1280, conf=confidence_threshold)
+            
+            # Print results for debugging
+            st.write("Detection Results:", results.pandas().xyxy[0])
             
             # Draw bounding boxes and labels on detected faces
             if not results.pandas().xyxy[0].empty:
@@ -132,7 +134,7 @@ def app():
                     cv2.putText(img_resized, f'{confidence:.2f}', (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             else:
                 st.write("No faces detected")
-
+        
             frame_rgb = cv2.cvtColor(img_resized, cv2.COLOR_BGR2RGB)
             frame_pil = Image.fromarray(frame_rgb)
             frame_placeholder.image(frame_pil, caption='Detected Faces', use_column_width=True)
