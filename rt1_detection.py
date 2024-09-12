@@ -23,37 +23,37 @@ def detect_faces(image):
 async def receive_frame(websocket_uri):
     async with websockets.connect(websocket_uri) as websocket:
         while True:
-            encoded_frame = await websocket.recv()
+            encoded_frame = await websocket.recv()  # Receive a frame from the WebSocket
             frame_bytes = base64.b64decode(encoded_frame)
             frame = np.frombuffer(frame_bytes, dtype=np.uint8)
             frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
-            yield frame
+            yield frame  # Yield the decoded frame for processing
+
+async def process_frames(websocket_uri, stframe):
+    async for frame in receive_frame(websocket_uri):
+        # Convert frame (OpenCV) to PIL Image
+        img_pil = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        
+        # Detect faces
+        img_with_boxes = detect_faces(frame)
+        
+        # Convert back to PIL Image
+        img_pil = Image.fromarray(cv2.cvtColor(img_with_boxes, cv2.COLOR_BGR2RGB))
+        
+        # Display the image
+        stframe.image(img_pil, channels="RGB")
 
 def app():
     st.title("Real-Time Face Detection with YOLOv8")
 
     websocket_uri = "ws://localhost:8765"  # WebSocket server URL
 
-    stframe = st.empty()
+    stframe = st.empty()  # Placeholder for real-time frame display
 
-    # Display a placeholder for the image
-    while True:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        frames = asyncio.run(receive_frame(websocket_uri))
-
-        for frame in frames:
-            # Convert frame (OpenCV) to PIL Image
-            img_pil = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-            
-            # Detect faces
-            img_with_boxes = detect_faces(frame)
-            
-            # Convert back to PIL Image
-            img_pil = Image.fromarray(cv2.cvtColor(img_with_boxes, cv2.COLOR_BGR2RGB))
-            
-            # Display the image
-            stframe.image(img_pil, channels="RGB")
+    # Run the async function using asyncio's event loop
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(process_frames(websocket_uri, stframe))
 
 if __name__ == "__main__":
     main()
