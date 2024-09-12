@@ -9,7 +9,7 @@ from ultralytics import YOLO
 import base64
 
 # Load YOLOv8 model
-model = YOLO('best_50.pt')  # Replace with your YOLOv8 model path
+model = YOLO('path/to/your/yolov8_model.pt')  # Replace with your YOLOv8 model path
 
 def detect_faces(image):
     # Perform face detection
@@ -36,9 +36,13 @@ def app():
 
     stframe = st.empty()
 
-    # Create an asynchronous loop to fetch and process frames
-    async def process_frames():
-        async for frame in receive_frame(websocket_uri):
+    # Display a placeholder for the image
+    while True:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        frames = asyncio.run(receive_frame(websocket_uri))
+
+        for frame in frames:
             # Convert frame (OpenCV) to PIL Image
             img_pil = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
             
@@ -51,10 +55,5 @@ def app():
             # Display the image
             stframe.image(img_pil, channels="RGB")
 
-    # Run the asynchronous loop within Streamlit
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(process_frames())
-
 if __name__ == "__main__":
-    app()
+    main()
