@@ -96,8 +96,8 @@ def app():
         """
         
         # Render the HTML video capture
-        st.components.v1.html(video_html, height=480)
-        # Placeholder for the image
+        st.components.v1.html(video_html, height=400)
+        # Placeholders for image and detections
         frame_placeholder = st.empty()
         detection_placeholder = st.empty()
 
@@ -112,7 +112,7 @@ def app():
             try:
                 results = model(frame_img)
                 detections = results.pandas().xyxy[0]
-                print(detections)
+                
                 if detections.empty:
                     detection_placeholder.write("No faces detected")
                 else:
