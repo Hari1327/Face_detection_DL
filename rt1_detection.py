@@ -6,7 +6,7 @@ import base64
 from ultralytics import YOLO
 
 # Load the YOLO model
-model = YOLO("C:/Users/Hari Haran/OneDrive/Desktop/Guvi_final_project/best_50.pt")
+model = YOLO("best_50.pt")
 
 # Function to decode base64 to OpenCV image
 def base64_to_cv2_image(base64_str):
