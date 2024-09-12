@@ -1,26 +1,24 @@
 # main.py
 import streamlit as st
-import cv2
-import numpy as np
-from PIL import Image
 import base64
-import time
+from PIL import Image
+import numpy as np
+import cv2
 
 def app():
     st.title("Real-Time Face Detection with WebSocket")
 
-    # HTML and JavaScript for WebSocket connection
+    # WebSocket HTML and JavaScript for webcam and sending frames
     websocket_html = """
         <script>
-            let ws = new WebSocket("ws://localhost:8765");
+            // Initialize WebSocket connection
+            const ws = new WebSocket("ws://localhost:8765");
 
-            ws.onopen = function() {
-                console.log("WebSocket connection opened");
-            };
+            ws.onopen = () => console.log("WebSocket connection opened");
 
-            ws.onmessage = function(event) {
-                // Handle the received image
-                let img = new Image();
+            ws.onmessage = (event) => {
+                // Update image source with the received data
+                const img = new Image();
                 img.src = event.data;
                 document.getElementById('image').src = img.src;
             };
@@ -29,22 +27,29 @@ def app():
                 ws.send(base64Frame);
             }
 
-            // Capture video frame and send to WebSocket
-            function captureFrame() {
-                let canvas = document.createElement('canvas');
-                let video = document.getElementById('video');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                let context = canvas.getContext('2d');
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                let base64Frame = canvas.toDataURL('image/jpeg');
-                sendFrame(base64Frame);
+            async function startCamera() {
+                try {
+                    const video = document.getElementById('video');
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    video.srcObject = stream;
+
+                    setInterval(() => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        const context = canvas.getContext('2d');
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        const base64Frame = canvas.toDataURL('image/jpeg');
+                        sendFrame(base64Frame);
+                    }, 1000);  // Adjust frame capture interval as needed
+                } catch (error) {
+                    console.error('Error accessing the webcam: ', error);
+                }
             }
 
-            // Start capturing frames every second
-            setInterval(captureFrame, 1000);
+            startCamera();
         </script>
-        <video id="video" autoplay></video>
+        <video id="video" autoplay playsinline></video>
         <img id="image" />
     """
 
