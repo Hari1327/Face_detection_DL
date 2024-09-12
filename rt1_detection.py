@@ -4,7 +4,6 @@ import cv2
 from PIL import Image
 from ultralytics import YOLO
 import base64
-import io
 
 # Load the YOLO model
 model = YOLO("best_50.pt")
@@ -47,20 +46,25 @@ def app():
     # Add a button to start/stop the webcam
     start_camera = st.button("Start Camera")
     stop_camera = st.button("Stop Camera")
-    
+
     # Initialize camera status
     if 'camera_running' not in st.session_state:
         st.session_state['camera_running'] = False
-    
+        st.session_state['stream_status'] = "No stream available"
+
     if start_camera:
         st.session_state['camera_running'] = True
+        st.session_state['stream_status'] = "Streaming..."
     if stop_camera:
         st.session_state['camera_running'] = False
+        st.session_state['stream_status'] = "No stream available"
 
     # Button to check if the model is running
     if st.button("Check Model Status"):
         status, message = test_model()
         st.success(message) if status else st.error(message)
+
+    st.write(f"**Stream Status:** {st.session_state['stream_status']}")
 
     if st.session_state['camera_running']:
         # HTML5 video capture component
@@ -76,9 +80,10 @@ def app():
                     try {
                         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                         video.srcObject = stream;
+                        window.parent.postMessage({ type: 'STREAM_STATUS', data: 'streaming' }, '*');
                     } catch (error) {
                         console.error('Error accessing the webcam: ', error);
-                        window.parent.postMessage({ type: 'ERROR', data: 'Error accessing the webcam' }, '*');
+                        window.parent.postMessage({ type: 'STREAM_STATUS', data: 'error' }, '*');
                     }
                 }
 
@@ -145,17 +150,17 @@ def app():
                 base64_frame = message.get('data')
                 if base64_frame:
                     update_frame(base64_frame)
+            elif message.get('type') == 'STREAM_STATUS':
+                status = message.get('data')
+                st.session_state['stream_status'] = "Streaming..." if status == 'streaming' else "No stream available"
 
         # JavaScript to handle messages
         st.components.v1.html("""
             <script>
                 window.addEventListener('message', function(event) {
                     const message = event.data;
-                    if (message.type === 'FRAME') {
-                        const frameData = message.data;
-                        if (frameData) {
-                            window.parent.postMessage(message, '*');
-                        }
+                    if (message.type === 'FRAME' || message.type === 'STREAM_STATUS') {
+                        window.parent.postMessage(message, '*');
                     }
                 });
             </script>
