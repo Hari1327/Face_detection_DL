@@ -1,33 +1,41 @@
-import streamlit as st
-import numpy as np
+# rt1_detection.py
 import cv2
-from PIL import Image
-import asyncio
+import numpy as np
+import base64
 import websockets
+import asyncio
 
-st.title("Face Detection with WebSocket")
+# Dummy face detection function (Replace with your actual model)
+def dummy_face_detection(img):
+    # Here you would use your model to detect faces and draw bounding boxes
+    # For demonstration, we'll just return the image as is
+    return img
 
-# WebSocket server URL
-WEBSOCKET_URL = "ws://localhost:8765"
+async def process_frame(websocket, path):
+    async for message in websocket:
+        try:
+            # Decode base64 to OpenCV image
+            img_bytes = base64.b64decode(message.split(",")[1])
+            img_array = np.frombuffer(img_bytes, np.uint8)
+            img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
 
-# Function to capture and send video frames
-async def capture_frames():
-    async with websockets.connect(WEBSOCKET_URL) as websocket:
-        while True:
-            # Capture frame from webcam
-            frame = st.camera_input("Capture")
-            if frame:
-                img_bytes = frame.read()
-                base64_img = base64.b64encode(img_bytes).decode()
-                
-                # Send frame to WebSocket server
-                await websocket.send(f"data:image/jpeg;base64,{base64_img}")
+            # Perform detection
+            img = dummy_face_detection(img)
 
-                # Receive processed frame from WebSocket server
-                response = await websocket.recv()
-                st.image(response, caption='Detected Faces', use_column_width=True)
+            # Encode the processed image back to base64
+            _, buffer = cv2.imencode('.jpg', img)
+            encoded_img = base64.b64encode(buffer).decode('utf-8')
 
-# Button to start streaming
-if st.button("Start Camera"):
-    st.write("Streaming...")
-    asyncio.run(capture_frames())
+            # Send back the processed image
+            await websocket.send(f"data:image/jpeg;base64,{encoded_img}")
+        except Exception as e:
+            print(f"Error processing frame: {e}")
+
+def start_websocket_server():
+    start_server = websockets.serve(process_frame, "localhost", 8765)
+    asyncio.get_event_loop().run_until_complete(start_server)
+    asyncio.get_event_loop().run_forever()
+
+def app():
+    print("WebSocket server started")
+    start_websocket_server()
