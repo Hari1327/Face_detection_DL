@@ -82,7 +82,7 @@ def app():
         frame_placeholder.image(frame_pil, caption='Detected Faces', use_column_width=True)
 
     # Process frames from JavaScript
-    if st.experimental_get_query_params():
+    if st.query_params():
         frame_data = st.query_params().get('data')
         if frame_data:
             update_frame(frame_data[0])
