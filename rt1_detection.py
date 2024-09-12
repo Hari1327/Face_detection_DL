@@ -1,41 +1,36 @@
-# rt1_detection.py
+import streamlit as st
 import cv2
 import numpy as np
-import base64
-import websockets
 import asyncio
+import websockets
+from PIL import Image
+import io
 
-# Dummy face detection function (Replace with your actual model)
-def dummy_face_detection(img):
-    # Here you would use your model to detect faces and draw bounding boxes
-    # For demonstration, we'll just return the image as is
-    return img
+# WebSocket server URI
+WS_URI = "ws://localhost:8765"
 
-async def process_frame(websocket, path):
-    async for message in websocket:
-        try:
-            # Decode base64 to OpenCV image
-            img_bytes = base64.b64decode(message.split(",")[1])
-            img_array = np.frombuffer(img_bytes, np.uint8)
-            img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+async def receive_frame():
+    async with websockets.connect(WS_URI) as websocket:
+        while True:
+            frame_bytes = await websocket.recv()
+            return frame_bytes
 
-            # Perform detection
-            img = dummy_face_detection(img)
-
-            # Encode the processed image back to base64
-            _, buffer = cv2.imencode('.jpg', img)
-            encoded_img = base64.b64encode(buffer).decode('utf-8')
-
-            # Send back the processed image
-            await websocket.send(f"data:image/jpeg;base64,{encoded_img}")
-        except Exception as e:
-            print(f"Error processing frame: {e}")
-
-def start_websocket_server():
-    start_server = websockets.serve(process_frame, "localhost", 8765)
-    asyncio.get_event_loop().run_until_complete(start_server)
-    asyncio.get_event_loop().run_forever()
+def get_frame():
+    # Run the asynchronous receive_frame function in a synchronous context
+    return asyncio.run(receive_frame())
 
 def app():
-    print("WebSocket server started")
-    start_websocket_server()
+    st.title("Real-Time Face Detection with YOLO")
+
+    # Display the video feed
+    stframe = st.empty()
+
+    while True:
+        frame_bytes = get_frame()
+        
+        # Convert bytes to image
+        img = Image.open(io.BytesIO(frame_bytes))
+        stframe.image(img, caption='Live Video Feed', use_column_width=True)
+
+if __name__ == "__main__":
+    app()
