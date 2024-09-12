@@ -2,8 +2,9 @@ import streamlit as st
 import numpy as np
 import cv2
 from PIL import Image
-import base64
 from ultralytics import YOLO
+import base64
+import io
 
 # Load the YOLO model
 model = YOLO("best_50.pt")
@@ -90,7 +91,7 @@ def app():
                 }
 
                 startCamera().then(() => {
-                    setInterval(captureFrame, 100);
+                    setInterval(captureFrame, 100);  // Adjust frame capture interval as needed
                 });
             </script>
         """
@@ -112,7 +113,8 @@ def app():
             try:
                 results = model(frame_img)
                 detections = results.pandas().xyxy[0]
-                
+
+                # Draw detections
                 if detections.empty:
                     detection_placeholder.write("No faces detected")
                 else:
@@ -132,6 +134,7 @@ def app():
                 st.error(f"Error during model inference: {e}")
                 return
 
+            # Convert OpenCV image to PIL image for display
             frame_rgb = cv2.cvtColor(frame_img, cv2.COLOR_BGR2RGB)
             frame_pil = Image.fromarray(frame_rgb)
             frame_placeholder.image(frame_pil, caption='Detected Faces', use_column_width=True)
@@ -149,7 +152,10 @@ def app():
                 window.addEventListener('message', function(event) {
                     const message = event.data;
                     if (message.type === 'FRAME') {
-                        window.parent.postMessage(message, '*');
+                        const frameData = message.data;
+                        if (frameData) {
+                            window.parent.postMessage(message, '*');
+                        }
                     }
                 });
             </script>
