@@ -1,7 +1,6 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Streamlit app interface
 def app():
     st.title("Real-Time Face Detection with YOLO")
 
@@ -15,12 +14,12 @@ def app():
         format="%.2f"
     )
 
-    # WebSocket connection
+    # WebSocket URL
     ws_url = "ws://localhost:8765"
 
     st.write(f"**Confidence Threshold:** {confidence_threshold}")
 
-    # JavaScript for WebSocket communication and video capture
+    # HTML and JavaScript for video capture and WebSocket communication
     video_html = f"""
         <video id="webcam" autoplay playsinline></video>
         <canvas id="canvas"></canvas>
